@@ -31,6 +31,12 @@ async def serve_ui():
     return HTMLResponse(p.read_text(encoding="utf-8") if p.exists() else "<h1>Vulnix</h1>")
 
 
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    from fastapi.responses import FileResponse
+    return FileResponse(STATIC / "favicon.png")
+
+
 # ── Health / capability check ─────────────────────────────────────────────
 @app.get("/api/status")
 async def status():
