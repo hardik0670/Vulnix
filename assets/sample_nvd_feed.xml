@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nvd>
+  <entry id="CVE-2024-0001">
+    <publishedDate>2024-01-18T12:00:00Z</publishedDate>
+    <cvss3>9.8</cvss3><baseSeverity>CRITICAL</baseSeverity>
+    <description>A remote code execution vulnerability exists in the API gateway due to unsafe deserialization of untrusted XML payloads. Attackers can trigger arbitrary command execution without authentication by sending a crafted HTTP POST request.</description>
+    <cwe>CWE-502</cwe>
+  </entry>
+  <entry id="CVE-2024-0002">
+    <publishedDate>2024-02-11T10:30:00Z</publishedDate>
+    <cvss3>7.5</cvss3><baseSeverity>HIGH</baseSeverity>
+    <description>Path traversal in the file export handler allows an authenticated attacker to read sensitive server files by manipulating user-controlled paths using ../ sequences.</description>
+    <cwe>CWE-22</cwe>
+  </entry>
+  <entry id="CVE-2024-0003">
+    <publishedDate>2024-03-02T09:15:00Z</publishedDate>
+    <cvss3>5.3</cvss3><baseSeverity>MEDIUM</baseSeverity>
+    <description>Insufficient rate limiting in the login service could enable brute-force credential attacks at scale allowing unlimited password guesses against any user account.</description>
+    <cwe>CWE-307</cwe>
+  </entry>
+  <entry id="CVE-2024-0004">
+    <publishedDate>2024-03-15T14:00:00Z</publishedDate>
+    <cvss3>9.1</cvss3><baseSeverity>CRITICAL</baseSeverity>
+    <description>SQL injection vulnerability in the user search parameter of the admin panel allows unauthenticated attackers to read, modify, and delete database records due to insufficient input sanitization.</description>
+    <cwe>CWE-89</cwe>
+  </entry>
+  <entry id="CVE-2024-0005">
+    <publishedDate>2024-04-01T08:00:00Z</publishedDate>
+    <cvss3>3.1</cvss3><baseSeverity>LOW</baseSeverity>
+    <description>Reflected XSS vulnerability in the comment field of user profile pages. Requires user interaction and impacts only the victim browser session within the same origin.</description>
+    <cwe>CWE-79</cwe>
+  </entry>
+  <entry id="CVE-2024-0006">
+    <publishedDate>2024-04-20T11:30:00Z</publishedDate>
+    <cvss3>8.1</cvss3><baseSeverity>HIGH</baseSeverity>
+    <description>Authentication bypass via JWT token signature validation flaw. Attackers can forge tokens exploiting algorithm confusion between RS256 and HS256, gaining unauthorized access to protected endpoints.</description>
+    <cwe>CWE-287</cwe>
+  </entry>
+  <entry id="CVE-2024-0007">
+    <publishedDate>2024-05-10T16:45:00Z</publishedDate>
+    <cvss3>6.5</cvss3><baseSeverity>MEDIUM</baseSeverity>
+    <description>Server-side request forgery in the webhook configuration endpoint allows authenticated users to make requests to internal network services and private metadata APIs.</description>
+    <cwe>CWE-918</cwe>
+  </entry>
+  <entry id="CVE-2024-0008">
+    <publishedDate>2024-05-28T09:00:00Z</publishedDate>
+    <cvss3>9.9</cvss3><baseSeverity>CRITICAL</baseSeverity>
+    <description>OS command injection in the network diagnostics tool allows authenticated administrators to execute arbitrary commands on the host. Input to the ping utility is unsanitized, enabling shell metacharacter injection.</description>
+    <cwe>CWE-78</cwe>
+  </entry>
+  <entry id="CVE-2024-0009">
+    <publishedDate>2024-06-05T13:20:00Z</publishedDate>
+    <cvss3>7.2</cvss3><baseSeverity>HIGH</baseSeverity>
+    <description>Insecure direct object reference in the document download endpoint allows authenticated users to access documents of other users by manipulating the document ID in the request URL.</description>
+    <cwe>CWE-639</cwe>
+  </entry>
+  <entry id="CVE-2024-0010">
+    <publishedDate>2024-06-18T10:00:00Z</publishedDate>
+    <cvss3>4.3</cvss3><baseSeverity>MEDIUM</baseSeverity>
+    <description>Missing CSRF protection on state-changing API endpoints allows attackers to trick authenticated users into performing unintended actions including account changes and data deletion via crafted web pages.</description>
+    <cwe>CWE-352</cwe>
+  </entry>
+</nvd>
