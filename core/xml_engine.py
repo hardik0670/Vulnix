@@ -14,6 +14,26 @@ from lxml import etree
 SEVERITY_ORDER = ["CRITICAL", "HIGH", "MEDIUM", "LOW", "UNKNOWN"]
 CVE_PATTERN = re.compile(r"\bCVE-\d{4}-\d{4,7}\b", re.IGNORECASE)
 
+# ── Prompt-injection sanitization ─────────────────────────────────────────
+# Strip common LLM-manipulation patterns from text that will flow into prompts.
+_INJECTION_RE = re.compile(
+    r"(ignore\s+(previous|above|prior)\s+instructions?|"
+    r"you\s+are\s+now|act\s+as|pretend\s+(you\s+are|to\s+be)|"
+    r"disregard\s+(all|any|your)|forget\s+(everything|all)|"
+    r"system\s*:|\[INST\]|<\|im_start\|>)",
+    re.IGNORECASE,
+)
+
+def _sanitize_for_prompt(text: str, max_chars: int = 2000) -> str:
+    """
+    Truncate and strip potential prompt-injection patterns from
+    free-text fields before they are embedded in Gemini prompts.
+    """
+    if not text:
+        return ""
+    cleaned = _INJECTION_RE.sub("[REDACTED]", text)
+    return cleaned[:max_chars]
+
 
 @dataclass
 class XMLProcessingResult:
@@ -49,11 +69,11 @@ def _repair_with_bs4(raw_xml: str) -> str:
 
 
 def _normalize_severity(score: float | None) -> str:
-    if score is None:       return "UNKNOWN"
-    if score >= 9.0:        return "CRITICAL"
-    if score >= 7.0:        return "HIGH"
-    if score >= 4.0:        return "MEDIUM"
-    if score > 0.0:         return "LOW"
+    if score is None:    return "UNKNOWN"
+    if score >= 9.0:     return "CRITICAL"
+    if score >= 7.0:     return "HIGH"
+    if score >= 4.0:     return "MEDIUM"
+    if score > 0.0:      return "LOW"
     return "UNKNOWN"
 
 
@@ -67,14 +87,10 @@ def _safe_float(value: str | None) -> float | None:
 def _severity_from_text(value: str) -> str:
     """Map arbitrary severity labels to supported values."""
     v = (value or "").upper()
-    if "CRITICAL" in v:
-        return "CRITICAL"
-    if "HIGH" in v:
-        return "HIGH"
-    if "MEDIUM" in v:
-        return "MEDIUM"
-    if "LOW" in v:
-        return "LOW"
+    if "CRITICAL" in v: return "CRITICAL"
+    if "HIGH"     in v: return "HIGH"
+    if "MEDIUM"   in v: return "MEDIUM"
+    if "LOW"      in v: return "LOW"
     return "UNKNOWN"
 
 
@@ -152,6 +168,13 @@ def _extract_cve_records(root: etree._Element) -> list[dict[str, Any]]:
         if severity not in SEVERITY_ORDER:
             severity = _normalize_severity(score)
 
+        raw_description = _first(node, [
+            ".//*[local-name()='summary']/text()",
+            ".//*[local-name()='description']/text()",
+            ".//*[local-name()='Description']/text()",
+            ".//*[local-name()='desc']/text()",
+        ])
+
         records.append({
             "cve_id":         cve_id,
             "severity":       severity,
@@ -161,18 +184,14 @@ def _extract_cve_records(root: etree._Element) -> list[dict[str, Any]]:
                 ".//*[local-name()='publishedDate']/text()",
                 ".//*[local-name()='date']/text()",
             ])),
-            "description": _first(node, [
-                ".//*[local-name()='summary']/text()",
-                ".//*[local-name()='description']/text()",
-                ".//*[local-name()='Description']/text()",
-                ".//*[local-name()='desc']/text()",
-            ]),
+            # Sanitized for safe embedding in AI prompts
+            "description": _sanitize_for_prompt(raw_description),
             "cwe": _first(node, [
                 ".//*[local-name()='cwe']/text()",
                 ".//*[local-name()='CWE']/text()",
             ]),
             "owasp_top10": _map_owasp_top10(
-                _first(node, [".//*[local-name()='summary']/text()", ".//*[local-name()='description']/text()"]),
+                raw_description,
                 _first(node, [".//*[local-name()='cwe']/text()", ".//*[local-name()='CWE']/text()"]),
             ),
         })
@@ -194,10 +213,11 @@ def _extract_cve_records(root: etree._Element) -> list[dict[str, Any]]:
             ".//*[local-name()='risk']/text()",
             ".//*[local-name()='riskcode']/text()",
         ]))
-        description = _first(node, [
+        raw_description = _first(node, [
             ".//*[local-name()='desc']/text()",
             ".//*[local-name()='otherinfo']/text()",
         ])
+        description = _sanitize_for_prompt(raw_description)
         alert_name = _first(node, [
             ".//*[local-name()='name']/text()",
             ".//*[local-name()='alert']/text()",
@@ -208,10 +228,8 @@ def _extract_cve_records(root: etree._Element) -> list[dict[str, Any]]:
         ])
         if cwe_value and cwe_value.isdigit():
             cwe_value = f"CWE-{cwe_value}"
-        owasp_top10 = _map_owasp_top10(alert_name, description, combined, cwe_value)
+        owasp_top10 = _map_owasp_top10(alert_name, raw_description, combined, cwe_value)
 
-        # ZAP reports often include vulnerability alerts without CVE identifiers.
-        # Emit synthetic IDs so multi-format vulnerability XMLs still produce records.
         if not cve_ids:
             base_id = _first(node, [
                 ".//*[local-name()='pluginid']/text()",
@@ -228,7 +246,7 @@ def _extract_cve_records(root: etree._Element) -> list[dict[str, Any]]:
                 "severity":       severity,
                 "cvss_score":     None,
                 "published_date": "",
-                "description":    description or alert_name,
+                "description":    description or _sanitize_for_prompt(alert_name),
                 "cwe":            cwe_value,
                 "owasp_top10":    owasp_top10,
             })
@@ -243,7 +261,7 @@ def _extract_cve_records(root: etree._Element) -> list[dict[str, Any]]:
                 "severity":       severity,
                 "cvss_score":     None,
                 "published_date": "",
-                "description":    description or alert_name,
+                "description":    description or _sanitize_for_prompt(alert_name),
                 "cwe":            cwe_value,
                 "owasp_top10":    owasp_top10,
             })
@@ -278,10 +296,11 @@ def _extract_finding_records(root: etree._Element) -> list[dict[str, Any]]:
             ".//*[local-name()='name']/text()",
             ".//*[local-name()='alert']/text()",
         ]) or f"Alert {aidx}"
-        description = _first(node, [
+        raw_description = _first(node, [
             ".//*[local-name()='otherinfo']/text()",
             ".//*[local-name()='desc']/text()",
         ]) or alert_name
+        description = _sanitize_for_prompt(raw_description)
         reference = _first(node, [".//*[local-name()='reference']/text()"])
         severity = _severity_from_text(_first(node, [
             ".//*[local-name()='riskdesc']/text()",
@@ -295,7 +314,7 @@ def _extract_finding_records(root: etree._Element) -> list[dict[str, Any]]:
         if cwe_value and cwe_value.isdigit():
             cwe_value = f"CWE-{cwe_value}"
 
-        combined = "\n".join([alert_name, description, reference, cwe_value])
+        combined = "\n".join([alert_name, raw_description, reference, cwe_value])
         cves = [m.group(0).upper() for m in CVE_PATTERN.finditer(combined)]
         primary_id = cves[0] if cves else (
             _first(node, [
@@ -303,7 +322,7 @@ def _extract_finding_records(root: etree._Element) -> list[dict[str, Any]]:
                 ".//*[local-name()='alertRef']/text()",
             ]) or str(aidx)
         )
-        owasp_top10 = _map_owasp_top10(alert_name, description, reference, cwe_value)
+        owasp_top10 = _map_owasp_top10(alert_name, raw_description, reference, cwe_value)
 
         instances = node.xpath(".//*[local-name()='instance']")
         if instances:
@@ -344,15 +363,24 @@ def _extract_finding_records(root: etree._Element) -> list[dict[str, Any]]:
 def sanitize_and_extract(xml_bytes: bytes) -> XMLProcessingResult:
     raw_xml  = _decode_bytes(xml_bytes)
     repaired = _repair_with_bs4(raw_xml)
-    parser   = etree.XMLParser(recover=True, remove_blank_text=True)
+
+    # Security: disable entity resolution and network access to prevent XXE
+    parser = etree.XMLParser(
+        recover=True,
+        remove_blank_text=True,
+        resolve_entities=False,   # prevents entity expansion attacks
+        no_network=True,          # prevents external entity fetching (SSRF)
+        load_dtd=False,           # prevents DTD-based attacks
+    )
     try:
         root = etree.parse(BytesIO(repaired.encode("utf-8")), parser).getroot()
     except etree.XMLSyntaxError as e:
         raise XMLSanitizationError("Unable to parse XML after repair.") from e
+
     cleaned = etree.tostring(
         root, pretty_print=True, encoding="utf-8", xml_declaration=True
     ).decode("utf-8")
-    cve_records = _extract_cve_records(root)
+    cve_records     = _extract_cve_records(root)
     finding_records = _extract_finding_records(root)
     return XMLProcessingResult(
         raw_xml=raw_xml,

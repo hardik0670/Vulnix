@@ -3,7 +3,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# Environments
+# Environments — NEVER commit real credentials
 .env
 .venv/
 env/
@@ -12,7 +12,10 @@ ENV/
 env.bak/
 venv.bak/
 
-# Project Specific
+# .env.example IS safe to commit (contains no real secrets)
+!.env.example
+
+# Project Specific — scan reports are user data, not source code
 *.xml
 !assets/sample_nvd_feed.xml
 

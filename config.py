@@ -1,7 +1,7 @@
 """
 Vulnix Backend Configuration
 =============================
-Set your Gemini API key and preferred model here.
+Copy .env.example → .env and fill in your real values.
 This file is never exposed to the frontend or end users.
 """
 
@@ -14,14 +14,24 @@ load_dotenv()
 # ── Gemini AI Configuration ──────────────────────────────────────────────
 GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
 
-# Ordered failover list (first model tried first, then fallback in sequence)
-# Valid models: gemini-3.1-flash-lite-preview, gemini-2.5-flash-lite
+# Ordered failover list — first model tried first, then fallback in sequence.
+# Verify current model IDs at: https://ai.google.dev/gemini-api/docs/models
 GEMINI_MODEL_FALLBACK: list[str] = [
-    "gemini-3.1-flash-lite-preview",
-    "gemini-2.5-flash-lite",
+    "gemini-2.5-flash-lite",       # primary  (fast, cheap)
+    "gemini-2.0-flash",            # fallback (more capable)
 ]
 
 # ── Server Configuration ─────────────────────────────────────────────────
-HOST: str = "127.0.0.1"
-PORT: int = 8000
+HOST:   str  = "127.0.0.1"
+PORT:   int  = 8000
 RELOAD: bool = True   # Set False in production
+
+# ── CORS ─────────────────────────────────────────────────────────────────
+# In production replace with your real frontend URL, e.g.:
+#   ALLOWED_ORIGINS = ["https://vulnix.yourdomain.com"]
+ALLOWED_ORIGINS: list[str] = os.getenv(
+    "ALLOWED_ORIGINS", "http://localhost:8000,http://127.0.0.1:8000"
+).split(",")
+
+# ── Upload Limits ─────────────────────────────────────────────────────────
+MAX_UPLOAD_BYTES: int = int(os.getenv("MAX_UPLOAD_MB", "10")) * 1024 * 1024  # default 10 MB
