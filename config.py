@@ -1,10 +1,3 @@
-"""
-Vulnix Backend Configuration
-=============================
-Copy .env.example → .env and fill in your real values.
-This file is never exposed to the frontend or end users.
-"""
-
 import os
 from dotenv import load_dotenv
 

@@ -1,9 +1,3 @@
-"""
-Model Training Script for Vulnix CVSS Predictor
-===============================================
-Usage: python scripts/train_cvss.py --data my_dataset.csv
-"""
-
 import os
 import argparse
 import pandas as pd
