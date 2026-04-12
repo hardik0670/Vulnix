@@ -2,17 +2,15 @@
 
 from __future__ import annotations
 
-import asyncio
 from pathlib import Path
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
 
 from core.xml_engine import XMLSanitizationError, sanitize_and_extract
-import core.gemini_summarizer as ai
+from core.ml_predictor import predictor
 import config
 
 app = FastAPI(title="Vulnix", version="3.1.0")
@@ -33,20 +31,6 @@ if STATIC.exists():
     app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
 
-# ── Pydantic request models ───────────────────────────────────────────────
-
-class BriefRequest(BaseModel):
-    cve_id:      str          = Field(..., max_length=32)
-    description: str          = Field(default="", max_length=4096)
-    severity:    str          = Field(default="", max_length=16)
-    cvss_score:  float | None = Field(default=None, ge=0.0, le=10.0)
-
-
-class ExplainRequest(BaseModel):
-    query:   str = Field(..., min_length=1, max_length=1000)
-    context: str = Field(default="", max_length=4096)
-
-
 # ── Frontend ──────────────────────────────────────────────────────────────
 @app.get("/", response_class=HTMLResponse)
 async def serve_ui():
@@ -63,7 +47,10 @@ async def favicon():
 # ── Health / capability check ─────────────────────────────────────────────
 @app.get("/api/status")
 async def status():
-    return {"ok": True, "ai_enabled": ai.is_configured()}
+    return {
+        "ok": True,
+        "ml_enabled": predictor.is_ready
+    }
 
 
 # ── Parse + scan XML ──────────────────────────────────────────────────────
@@ -89,6 +76,16 @@ async def scan(file: UploadFile = File(...)):
 
     try:
         result = sanitize_and_extract(data)
+        
+        # ── ML Automatic Prediction ──────────────────────────────────────
+        # If a record has no score, try to predict it locally.
+        for rec in result.records:
+            if rec.get("cvss_score") is None:
+                pred = predictor.predict(rec.get("description", ""))
+                if pred is not None:
+                    rec["cvss_score"] = pred
+                    rec["ml_predicted"] = True
+                    
     except XMLSanitizationError as e:
         raise HTTPException(422, str(e))
     except Exception as e:
@@ -106,45 +103,8 @@ async def scan(file: UploadFile = File(...)):
             "cve":      len(result.cve_records),
             "findings": len(result.finding_records),
         },
-        "ai_enabled": ai.is_configured(),
+        "ml_enabled": predictor.is_ready,
     })
-
-
-# ── Per-CVE AI brief (the small assistant button) ─────────────────────────
-@app.post("/api/ai/brief")
-async def ai_brief(payload: BriefRequest):
-    """
-    Called when user clicks 'Ask AI' on a single CVE card.
-    Returns a structured threat brief from Gemini.
-    """
-    if not ai.is_configured():
-        raise HTTPException(503, "AI assistant not configured on server.")
-
-    brief = await asyncio.to_thread(
-        ai.ask_about_cve,
-        payload.cve_id,
-        payload.description,
-        payload.severity,
-        payload.cvss_score,
-    )
-    return {"brief": brief}
-
-
-@app.post("/api/ai/explain")
-async def ai_explain(payload: ExplainRequest):
-    """
-    Called from the Gemini explanation panel in the UI.
-    Returns a concise analyst-style explanation for freeform queries.
-    """
-    if not ai.is_configured():
-        raise HTTPException(503, "Gemini assistant not configured on server.")
-
-    explanation = await asyncio.to_thread(
-        ai.explain_text,
-        payload.query,
-        payload.context,
-    )
-    return {"explanation": explanation}
 
 
 # ── Run ───────────────────────────────────────────────────────────────────

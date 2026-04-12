@@ -503,6 +503,7 @@ td.desc{color:var(--text2);line-height:1.55;max-width:340px;font-size:12px}
 .b-MEDIUM  {background:rgba(234,179,8,.15);color:#fbbf24;border:1px solid rgba(234,179,8,.3)}
 .b-LOW     {background:rgba(34,197,94,.15);color:#4ade80;border:1px solid rgba(34,197,94,.3)}
 .b-UNKNOWN {background:rgba(100,116,139,.15);color:#94a3b8;border:1px solid rgba(100,116,139,.3)}
+.b-ML      {background:rgba(34,211,238,.1);color:var(--blue);border:1px solid var(--border2);font-size:8px;padding:1px 5px;margin-left:5px;vertical-align:middle}
 
 /* ── AI button (per CVE) ── */
 .ai-btn{
@@ -529,76 +530,6 @@ td.desc{color:var(--text2);line-height:1.55;max-width:340px;font-size:12px}
 .filter-bar input::placeholder{color:var(--text3);opacity:1}
 select option{background:var(--bg2);color:var(--text)}
 .res-count{font-size:10px;color:var(--text3);font-family:'Inter', 'Segoe UI', Roboto, Arial, sans-serif;white-space:nowrap}
-
-/* ── Gemini explanation box ── */
-.gem-box{
-  background:var(--surface);border:1px solid var(--border);border-radius:12px;
-  padding:14px;margin-bottom:14px;
-  animation:fade-up .35s ease both;
-}
-.gem-head{
-  font-size:10px;color:var(--text3);letter-spacing:1.2px;
-  font-family:'Inter', 'Segoe UI', Roboto, Arial, sans-serif;margin-bottom:10px;
-  display:flex;justify-content:space-between;align-items:center;gap:10px;
-}
-.gem-status{font-size:9px;padding:2px 8px;border-radius:999px;border:1px solid var(--border);color:var(--text3)}
-.gem-status.on{color:#4ade80;border-color:rgba(74,222,128,.35);background:rgba(74,222,128,.1)}
-.gem-input{
-  width:100%;min-height:82px;resize:vertical;
-  background:var(--bg2);border:1px solid var(--border);border-radius:8px;
-  color:var(--text);padding:10px 12px;font-size:12px;outline:none;
-}
-.gem-input:focus{border-color:var(--blue)}
-.gem-row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px}
-.gem-hint{font-size:10px;color:var(--text3);font-family:'Inter', 'Segoe UI', Roboto, Arial, sans-serif}
-.gem-out{
-  margin-top:10px;padding:12px;border-radius:8px;background:var(--bg3);
-  border:1px solid var(--border);font-size:12px;line-height:1.7;color:var(--text2);
-  white-space:pre-wrap;display:none;
-}
-.dash-gem-box{
-  background:linear-gradient(160deg, rgba(34,211,238,.1), rgba(6,182,212,.08));
-  border:1px solid var(--border2);
-  border-radius:14px;
-  padding:16px;
-  margin-bottom:16px;
-  box-shadow:0 8px 26px rgba(2,6,23,.35);
-  animation:fade-up .4s ease both;
-}
-.dash-gem-head{
-  font-size:10px;color:var(--text3);letter-spacing:1.1px;
-  font-family:'Inter', 'Segoe UI', Roboto, Arial, sans-serif;
-  margin-bottom:8px;
-  display:flex;justify-content:space-between;align-items:center;gap:10px;
-}
-.dash-gem-title{
-  display:flex;align-items:center;gap:8px;
-}
-.dash-gem-out{
-  padding:12px;border-radius:10px;background:var(--bg2);
-  border:1px solid var(--border);font-size:12px;line-height:1.75;color:var(--text2);
-  white-space:pre-wrap;min-height:72px;
-}
-.dash-gem-out.loading{animation:pulse-soft 1.15s ease-in-out infinite alternate}
-@keyframes pulse-soft{
-  from{opacity:.72}
-  to{opacity:1}
-}
-.gem-out.typing::after,
-.dash-gem-out.typing::after{
-  content:'';
-  display:inline-block;
-  width:7px;height:1.05em;
-  margin-left:2px;
-  background:var(--blue);
-  vertical-align:text-bottom;
-  animation:caret-blink .85s step-end infinite;
-}
-@keyframes caret-blink{
-  0%,49%{opacity:1}
-  50%,100%{opacity:0}
-}
-.sb-nav-item.locked{opacity:.6}
 
 /* ── XML diff ── */
 .diff-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
@@ -831,7 +762,6 @@ textarea.xml{
           <div class="feat-chip"><div class="chip-dot"></div>Auto XML Repair</div>
           <div class="feat-chip"><div class="chip-dot"></div>Multi-format CVE</div>
           <div class="feat-chip"><div class="chip-dot"></div>4 Live Charts</div>
-          <div class="feat-chip"><div class="chip-dot"></div>AI Threat Briefs</div>
           <div class="feat-chip"><div class="chip-dot"></div>CSV Export</div>
         </div>
 
@@ -842,12 +772,6 @@ textarea.xml{
     <!-- ── DASHBOARD VIEW ── -->
     <div id="view-dashboard" class="hidden">
       <div id="results">
-        <div class="dash-gem-box" id="dash-gem-box">
-          <div class="dash-gem-head">
-            <span class="dash-gem-title">AI EXPLANATION</span>
-          </div>
-          <div class="dash-gem-out" id="dash-gem-out">Run a scan to generate an automatic analyst summary.</div>
-        </div>
         <div id="metrics">
           <div class="metric"><div class="metric-label">TOTAL CVEs</div><div class="metric-val blue" id="m-total">0</div></div>
           <div class="metric"><div class="metric-label">CRITICAL</div><div class="metric-val crit" id="m-crit">0</div></div>
@@ -932,7 +856,6 @@ textarea.xml{
               <th data-col="cvss_score">CVSS <span class="sort-arr">↕</span></th>
               <th data-col="owasp_top10">OWASP Top 10 <span class="sort-arr">↕</span></th>
               <th>Description</th>
-              <th>AI Brief</th>
             </tr>
           </thead>
           <tbody id="intel-body"></tbody>
@@ -964,26 +887,6 @@ textarea.xml{
 </main>
 </div><!-- /app -->
 
-<!-- ════════════════ AI DRAWER ════════════════ -->
-<div id="ai-drawer">
-  <div class="drawer-head">
-    <div class="drawer-title">
-      <span>🤖</span> AI Threat Brief
-    </div>
-    <button class="drawer-close" id="drawer-close">✕</button>
-  </div>
-  <div class="drawer-body">
-    <div class="drawer-cve-head">
-      <div class="drawer-cve-id" id="drawer-cve-id"></div>
-      <div class="drawer-meta" id="drawer-meta"></div>
-    </div>
-    <div id="drawer-content"></div>
-    <div class="drawer-desc">
-      <div class="drawer-desc-label">RAW DESCRIPTION</div>
-      <div id="drawer-desc-text"></div>
-    </div>
-  </div>
-</div>
 
 <script>
 // ════════════════════════════════════════════════
@@ -993,7 +896,7 @@ const S = {
   records: [], cveRecords: [], findingRecords: [], mode: 'cve',
   rawXml: '', cleanedXml: '',
   fixedErrors: 0, fileName: '', file: null,
-  aiEnabled: false,
+  mlEnabled: false,
   sortCol: 'severity', sortDir: 'asc',
   charts: {},
   theme: localStorage.getItem('vulnix-theme') || 'dark',
@@ -1146,10 +1049,9 @@ async function runScan() {
     S.findingRecords = data.finding_records || [];
     const preferredMode = S.findingRecords.length > S.cveRecords.length ? 'findings' : 'cve';
     applyMode(preferredMode);
-    S.rawXml      = data.raw_xml;
     S.cleanedXml  = data.cleaned_xml;
     S.fixedErrors = data.fixed_error_count;
-    S.aiEnabled   = data.ai_enabled;
+    S.mlEnabled   = !!data.ml_enabled;
 
     setProgress(100, 'Analysis complete!');
     await sleep(400);
@@ -1165,7 +1067,6 @@ async function runScan() {
     renderAll();
     setStatus('✓ COMPLETE', 's-done');
     showView('dashboard');
-    runAutoDashboardExplanation();
 
   } catch(err) {
     hideProgress();
@@ -1350,15 +1251,13 @@ function renderCritTable() {
   if (!crits.length) { wrap.innerHTML='<div class="empty">No critical vulnerabilities found.</div>'; return; }
   wrap.innerHTML = `<table>
     <thead><tr>
-      <th>ID</th><th>CVSS</th><th>OWASP Category</th><th>Description</th><th>AI Brief</th>
+      <th>ID</th><th>CVSS</th><th>OWASP Category</th><th>Description</th>
     </tr></thead>
     <tbody>${crits.map(r => `<tr>
       <td class="cid">${r.cve_id}</td>
-      <td class="num"><span style="color:var(--crit);font-weight:700;font-family:'Inter', 'Segoe UI', Roboto, Arial, sans-serif">${r.cvss_score??'—'}</span></td>
+      <td class="num"><span style="color:var(--crit);font-weight:700;font-family:'Inter', 'Segoe UI', Roboto, Arial, sans-serif">${r.cvss_score??'—'}</span>${r.ml_predicted ? '<span class="badge b-ML">ML PREDICTED</span>' : ''}</td>
       <td class="dt"><b style="color:var(--text2)">${r.owasp_top10||'—'}</b> <span style="font-size:10px;opacity:.7">${OWASP_MAP[r.owasp_top10]||''}</span></td>
       <td class="desc">${esc(r.description||'—').slice(0,120)}${r.description?.length>120?'…':''}</td>
-      <td><button class="ai-btn${S.aiEnabled?'':' no-ai'}" onclick="openDrawer(${JSON.stringify(r).replace(/"/g,'&quot;')})"
-        ${S.aiEnabled?'':'title="AI not configured"'} style="padding:4px 10px;font-size:10px">🤖 Ask AI</button></td>
     </tr>`).join('')}</tbody></table>`;
 }
 
@@ -1390,11 +1289,9 @@ function renderIntelTable() {
   $('intel-body').innerHTML = rows.map(r => `<tr>
     <td class="cid">${r.cve_id}</td>
     <td><span class="badge b-${r.severity}">${r.severity}</span></td>
-    <td class="num">${r.cvss_score!=null?r.cvss_score.toFixed(1):'—'}</td>
+    <td class="num">${r.cvss_score!=null?r.cvss_score.toFixed(1):'—'}${r.ml_predicted ? '<span class="badge b-ML">PREDICTED</span>' : ''}</td>
     <td class="dt"><b style="color:var(--text2)">${r.owasp_top10||'—'}</b> <span style="font-size:10px;opacity:.7">${OWASP_MAP[r.owasp_top10]||''}</span></td>
     <td class="desc">${esc(r.description||'—').slice(0,130)}${(r.description||'').length>130?'…':''}</td>
-    <td><button class="ai-btn${S.aiEnabled?'':' no-ai'}" onclick="openDrawer(${JSON.stringify(r).replace(/"/g,'&quot;')})"
-      ${S.aiEnabled?'':'title="AI not configured in server config"'} style="padding:4px 10px;font-size:10px">🤖 Ask AI</button></td>
   </tr>`).join('');
 }
 
@@ -1405,141 +1302,9 @@ $('mode-select').addEventListener('change', e => {
   applyMode(e.target.value);
   if (S.records.length) {
     renderAll();
-    runAutoDashboardExplanation();
   }
 });
 
-// ── Gemini explanation box ──
-function buildGeminiContext() {
-  if (!S.records.length) return 'No scan records loaded yet.';
-  const crit = S.records.filter(r => r.severity === 'CRITICAL').length;
-  const high = S.records.filter(r => r.severity === 'HIGH').length;
-  const top = S.records
-    .filter(r => r.cvss_score != null)
-    .sort((a, b) => (b.cvss_score || 0) - (a.cvss_score || 0))
-    .slice(0, 5)
-    .map(r => `${r.cve_id} (${r.severity}, CVSS ${r.cvss_score})`)
-    .join(', ');
-  return `Mode: ${S.mode}. Total records: ${S.records.length}. Critical: ${crit}. High: ${high}. Top scored IDs: ${top || 'none'}.`;
-}
-
-let gemTypewriterToken = 0;
-async function typeGeminiText(target, text) {
-  const token = ++gemTypewriterToken;
-  target.textContent = '';
-  target.classList.add('typing');
-  const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (reducedMotion) {
-    target.textContent = text;
-    target.classList.remove('typing');
-    return;
-  }
-  const total = text.length;
-  const step = total > 900 ? 5 : total > 500 ? 4 : total > 240 ? 3 : 2;
-  const delay = total > 900 ? 6 : total > 500 ? 8 : 11;
-  for (let i = 0; i < total; i += step) {
-    if (token !== gemTypewriterToken) return;
-    target.textContent = text.slice(0, i + step);
-    await sleep(delay);
-  }
-  if (token === gemTypewriterToken) target.classList.remove('typing');
-}
-
-function autoDashboardPrompt() {
-  const sevCounts = SEV
-    .map(s => `${s}:${S.records.filter(r => r.severity === s).length}`)
-    .join(', ');
-  return [
-    'Generate an SOC-style executive summary for this vulnerability scan.',
-    'Include: top risk themes, likely attack impact, and prioritized remediation plan.',
-    'Keep it concise (6-10 lines), actionable, and specific to observed severity distribution and top CVEs.',
-    `Current scan severity counts: ${sevCounts}.`,
-  ].join(' ');
-}
-
-async function runAutoDashboardExplanation() {
-  const out = $('dash-gem-out');
-  out.classList.remove('typing');
-  out.classList.add('loading');
-  out.textContent = 'Generating automatic threat explanation...';
-  if (!S.aiEnabled) {
-    out.classList.remove('loading');
-    out.textContent = 'Gemini is disabled on this server. Configure API keys to enable automatic explanations.';
-    return;
-  }
-
-  try {
-    const res = await fetch('/api/ai/explain', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query: autoDashboardPrompt(), context: buildGeminiContext() }),
-    });
-    if (!res.ok) {
-      const e = await res.json().catch(() => ({ detail: res.statusText }));
-      throw new Error(e.detail || 'Request failed');
-    }
-    const data = await res.json();
-    out.classList.remove('loading');
-    await typeGeminiText(out, data.explanation || 'No explanation generated.');
-  } catch (err) {
-    gemTypewriterToken++;
-    out.classList.remove('loading');
-    out.classList.remove('typing');
-    out.textContent = `Error: ${err.message}`;
-  }
-}
-
-function esc(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
-// ════════════════════════════════════════════════
-// AI DRAWER
-// ════════════════════════════════════════════════
-async function openDrawer(record) {
-  $('drawer-cve-id').textContent = record.cve_id;
-  $('drawer-meta').innerHTML = `
-    <span class="badge b-${record.severity}">${record.severity}</span>
-    ${record.cvss_score!=null ? `<span style="font-family:'Inter', 'Segoe UI', Roboto, Arial, sans-serif;font-size:11px;color:var(--text3)">CVSS ${record.cvss_score.toFixed(1)}</span>` : ''}
-    ${record.cwe ? `<span style="font-family:'Inter', 'Segoe UI', Roboto, Arial, sans-serif;font-size:10px;color:var(--text3)">${record.cwe}</span>` : ''}`;
-  $('drawer-desc-text').textContent = record.description || 'No description available.';
-  $('drawer-content').innerHTML = `
-    <div class="ai-thinking">
-      <span>Generating threat brief…</span>
-      <div class="ai-dots"><span></span><span></span><span></span></div>
-    </div>`;
-  $('ai-drawer').classList.add('open');
-
-  try {
-    const res = await fetch('/api/ai/brief', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        cve_id: record.cve_id, description: record.description,
-        severity: record.severity, cvss_score: record.cvss_score,
-      }),
-    });
-    if (!res.ok) {
-      const e = await res.json().catch(() => ({ detail: res.statusText }));
-      throw new Error(e.detail);
-    }
-    const { brief } = await res.json();
-    // Render markdown-lite (bold only)
-    const html = brief
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .split('\n').map(l => `<p>${l}</p>`).join('');
-    $('drawer-content').innerHTML = `<div class="ai-result">${html}</div>`;
-  } catch(err) {
-    $('drawer-content').innerHTML = `<div class="ai-result" style="color:var(--crit)">Error: ${err.message}</div>`;
-  }
-}
-
-$('drawer-close').addEventListener('click', () => $('ai-drawer').classList.remove('open'));
-// Close on backdrop click
-document.addEventListener('click', e => {
-  const drawer = $('ai-drawer');
-  if (drawer.classList.contains('open') && !drawer.contains(e.target) && !e.target.classList.contains('ai-btn'))
-    drawer.classList.remove('open');
-});
 
 // ════════════════════════════════════════════════
 // EXPORTS
@@ -1564,7 +1329,6 @@ $('btn-dl-xml').addEventListener('click', () =>
 
 $('btn-new').addEventListener('click', () => {
   S.records=[]; S.cveRecords=[]; S.findingRecords=[]; S.mode='cve'; S.file=null; S.fileName='';
-  S.aiEnabled = false;
   $('drop-zone').classList.remove('has-file');
   $('drop-file-name').classList.add('hidden');
   $('upload-icon').innerHTML = `<svg width="26" height="26" viewBox="0 0 24 24" fill="none"
@@ -1574,8 +1338,7 @@ $('btn-new').addEventListener('click', () => {
     <line x1="12" y1="3" x2="12" y2="15"/></svg>`;
   $('scan-btn').disabled = true;
   $('sb-total').textContent = $('sb-crit').textContent = $('sb-high').textContent = '—';
-  $('dash-gem-out').classList.remove('typing', 'loading');
-  $('dash-gem-out').textContent = 'Run a scan to generate an automatic analyst summary.';
+  $('sb-total').textContent = $('sb-crit').textContent = $('sb-high').textContent = '—';
   $('mode-select').value = 'cve';
   setStatus('● READY', 's-idle');
   showView('scan');
@@ -1590,11 +1353,12 @@ showView('scan');
     const res = await fetch('/api/status');
     if (!res.ok) return;
     const data = await res.json();
-    S.aiEnabled = !!data.ai_enabled;
-  } catch (_) {
-    // keep default OFF status when backend status probe fails
-  }
+    S.mlEnabled = !!data.ml_enabled;
+  } catch (_) {}
 })();
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
 </script>
 </body>
 </html>

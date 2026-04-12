@@ -27,7 +27,7 @@ _INJECTION_RE = re.compile(
 def _sanitize_for_prompt(text: str, max_chars: int = 2000) -> str:
     """
     Truncate and strip potential prompt-injection patterns from
-    free-text fields before they are embedded in Gemini prompts.
+    free-text fields before they are processed by the frontend.
     """
     if not text:
         return ""
