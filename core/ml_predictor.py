@@ -1,9 +1,3 @@
-"""
-CVSS Score Predictor — Local ML Inference
-=========================================
-Uses a trained scikit-learn pipeline (TF-IDF + Ridge) to predict CVSS scores.
-"""
-
 import os
 import joblib
 import logging
