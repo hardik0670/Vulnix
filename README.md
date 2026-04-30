@@ -1,6 +1,11 @@
 # Vulnix v3.1 - CVE XML Threat Analyzer
 
+<<<<<<< HEAD
+Professional CVE XML scanner and analysis tool.  
+FastAPI backend · Single-page HTML frontend · Dark & Light mode
+=======
 Professional CVE XML scanner with AI-powered threat briefs.
+>>>>>>> d8fe507 (Analyze project and update core components for CVE XML Threat Analyzer)
 
 FastAPI backend, single-page HTML frontend, dark/light mode, safe XML parsing, OWASP ZAP report support, and optional local CVSS prediction.
 
@@ -16,16 +21,33 @@ Open `http://localhost:8000`.
 
 ## Environment Setup
 
+<<<<<<< HEAD
+All runtime config lives in `.env` (never committed).  
+Copy `.env.example` → `.env` and edit:
+
+```env
+ALLOWED_ORIGINS=http://localhost:8000
+=======
 All secrets and runtime config live in `.env`, which is intentionally ignored by git.
 
 ```env
 GEMINI_API_KEY=your-key-here
 ALLOWED_ORIGINS=http://localhost:8000,http://127.0.0.1:8000
+>>>>>>> d8fe507 (Analyze project and update core components for CVE XML Threat Analyzer)
 MAX_UPLOAD_MB=10
 CVSS_MODEL_PATH=core/models/cvss_model.joblib
 ```
 
-If no Gemini key is set, scanning, charts, tables, exports, and local CVSS prediction still work. The AI brief actions are disabled until a key is configured.
+<<<<<<< HEAD
+---
+
+## Production Checklist
+
+| Setting | Dev default | Production value |
+|---------|-------------|-----------------|
+| `RELOAD` in `config.py` | `True` | `False` |
+| `ALLOWED_ORIGINS` | `http://localhost:8000` | Your real frontend URL |
+| `MAX_UPLOAD_MB` | `10` | Adjust to your needs |
 
 ---
 
@@ -40,6 +62,8 @@ If no Gemini key is set, scanning, charts, tables, exports, and local CVSS predi
 7. **Dark / Light** mode toggle in top-right corner
 
 ---
+=======
+If no Gemini key is set, scanning, charts, tables, exports, and local CVSS prediction still work. The AI brief actions are disabled until a key is configured.
 
 ## Features
 
@@ -51,11 +75,25 @@ If no Gemini key is set, scanning, charts, tables, exports, and local CVSS predi
 6. Classify severity, CWE, and OWASP Top 10 categories where possible.
 7. Predict missing CVSS scores with a local scikit-learn model when available.
 8. Export CSV reports and cleaned XML.
+>>>>>>> d8fe507 (Analyze project and update core components for CVE XML Threat Analyzer)
 
 ## Project Structure
 
 ```text
 vulnix/
+<<<<<<< HEAD
+├── .env.example           ← Copy to .env (safe to commit)
+├── config.py              ← Runtime config, reads from .env
+├── server.py              ← FastAPI app — run this
+├── requirements.txt
+├── assets/
+│   └── sample_nvd_feed.xml
+├── static/
+│   └── index.html         ← Entire frontend
+└── core/
+    ├── xml_engine.py      ← XML parse, sanitize, XXE-safe, CVE extract
+    └── __init__.py
+=======
 |-- .env.example
 |-- config.py
 |-- server.py
@@ -73,6 +111,7 @@ vulnix/
 |   `-- train_cvss.py
 `-- static/
     `-- index.html
+>>>>>>> d8fe507 (Analyze project and update core components for CVE XML Threat Analyzer)
 ```
 
 ## API Endpoints
@@ -80,10 +119,15 @@ vulnix/
 | Method | Path | Description |
 | --- | --- | --- |
 | GET | `/` | Frontend |
+<<<<<<< HEAD
+| GET | `/api/status` | Health check |
+| POST | `/api/scan` | Upload XML (max 10 MB), get all CVEs |
+=======
 | GET | `/api/status` | Health and AI availability |
 | POST | `/api/scan` | Upload XML and return extracted records |
 | POST | `/api/ai/brief` | AI threat brief for one CVE |
 | POST | `/api/ai/explain` | Analyst-style explanation for a question |
+>>>>>>> d8fe507 (Analyze project and update core components for CVE XML Threat Analyzer)
 
 ## Optional CVSS Predictor
 
@@ -109,8 +153,15 @@ The default model path is configured by `CVSS_MODEL_PATH`. Local training datase
 
 ## Security Notes
 
+<<<<<<< HEAD
+- **CORS** is restricted to `ALLOWED_ORIGINS` — not wildcard in any mode.
+- **XXE** is prevented: entity resolution and network access disabled in lxml parser.
+- **Upload size** is capped at `MAX_UPLOAD_MB` (default 10 MB) server-side.
+- **API keys** are loaded from environment only — never hardcoded.
+=======
 - CORS is restricted to `ALLOWED_ORIGINS`.
 - XXE is mitigated by disabling entity resolution, DTD loading, and network access in the XML parser.
 - Upload size is capped by `MAX_UPLOAD_MB`.
 - Prompt-injection patterns in vulnerability descriptions are redacted before AI calls.
 - API keys are read from environment variables only.
+>>>>>>> d8fe507 (Analyze project and update core components for CVE XML Threat Analyzer)

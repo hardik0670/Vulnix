@@ -12,6 +12,9 @@ from transformers import pipeline
 
 LOGGER = logging.getLogger(__name__)
 
+# Persistent executor to avoid thread creation overhead per request
+_EXECUTOR = ThreadPoolExecutor(max_workers=1)
+
 
 @dataclass(slots=True)
 class SummarizationConfig:
@@ -69,9 +72,8 @@ class AISummarizer:
             return output[0]["summary_text"].strip()
 
         try:
-            with ThreadPoolExecutor(max_workers=1) as executor:
-                future = executor.submit(_run_inference)
-                return future.result(timeout=self.config.timeout_seconds)
+            future = _EXECUTOR.submit(_run_inference)
+            return future.result(timeout=self.config.timeout_seconds)
         except FutureTimeoutError:
             LOGGER.warning("Summarization timed out for a CVE description.")
             return "Summary generation timed out. Review raw description manually."

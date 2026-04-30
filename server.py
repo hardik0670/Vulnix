@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from core.xml_engine import XMLSanitizationError, sanitize_and_extract
+from core.xml_engine import XMLSanitizationError, sanitize_and_extract, normalize_severity
 from core.ml_predictor import predictor
 import config
 
@@ -75,15 +75,22 @@ async def scan(file: UploadFile = File(...)):
     try:
         result = sanitize_and_extract(data)
         
-        # ── ML Automatic Prediction ──────────────────────────────────────
-        # If a record has no score, try to predict it locally.
-        for rec in result.records:
-            if rec.get("cvss_score") is None:
-                pred = predictor.predict(rec.get("description", ""))
+        # ── ML Automatic Prediction (Batch) ──────────────────────────────
+        # Combine all records that might need prediction
+        all_records = result.cve_records + result.finding_records
+        records_to_predict = [rec for rec in all_records if rec.get("cvss_score") is None]
+        
+        if records_to_predict:
+            descriptions = [rec.get("description", "") for rec in records_to_predict]
+            predictions = predictor.predict_batch(descriptions)
+            
+            for rec, pred in zip(records_to_predict, predictions):
                 if pred is not None:
                     rec["cvss_score"] = pred
                     rec["ml_predicted"] = True
-                    
+                    # Re-evaluate severity if it was unknown or missing
+                    if rec.get("severity") in ("UNKNOWN", None):
+                        rec["severity"] = normalize_severity(pred)
     except XMLSanitizationError as e:
         raise HTTPException(422, str(e))
     except Exception as e:
