@@ -11,6 +11,11 @@ from typing import Any
 from bs4 import BeautifulSoup
 from lxml import etree
 
+try:
+    from core.ml_predictor import predictor as cvss_predictor
+except Exception:  # noqa: BLE001 - prediction is optional, parsing must still work
+    cvss_predictor = None
+
 SEVERITY_ORDER = ["CRITICAL", "HIGH", "MEDIUM", "LOW", "UNKNOWN"]
 CVE_PATTERN = re.compile(r"\bCVE-\d{4}-\d{4,7}\b", re.IGNORECASE)
 
@@ -75,6 +80,12 @@ def _normalize_severity(score: float | None) -> str:
     if score >= 4.0:     return "MEDIUM"
     if score > 0.0:      return "LOW"
     return "UNKNOWN"
+
+
+def _predict_cvss(description: str) -> float | None:
+    if cvss_predictor is None or not getattr(cvss_predictor, "is_ready", False):
+        return None
+    return cvss_predictor.predict(description)
 
 
 def _safe_float(value: str | None) -> float | None:
@@ -161,12 +172,11 @@ def _extract_cve_records(root: etree._Element) -> list[dict[str, Any]]:
             ".//*[local-name()='cvss3' or local-name()='baseScore']/text()",
             ".//*[local-name()='cvss']/text()", ".//*[local-name()='score']/text()",
         ]))
+        predicted_score = False
         severity = _first(node, [
             ".//*[local-name()='baseSeverity']/text()",
             ".//*[local-name()='severity']/text()",
         ]).upper()
-        if severity not in SEVERITY_ORDER:
-            severity = _normalize_severity(score)
 
         raw_description = _first(node, [
             ".//*[local-name()='summary']/text()",
@@ -174,18 +184,24 @@ def _extract_cve_records(root: etree._Element) -> list[dict[str, Any]]:
             ".//*[local-name()='Description']/text()",
             ".//*[local-name()='desc']/text()",
         ])
+        description = _sanitize_for_prompt(raw_description)
+        if score is None:
+            score = _predict_cvss(description)
+            predicted_score = score is not None
+        if severity not in SEVERITY_ORDER:
+            severity = _normalize_severity(score)
 
         records.append({
             "cve_id":         cve_id,
             "severity":       severity,
             "cvss_score":     score,
+            "cvss_predicted":  predicted_score,
             "published_date": _parse_date(_first(node, [
                 ".//*[local-name()='published']/text()",
                 ".//*[local-name()='publishedDate']/text()",
                 ".//*[local-name()='date']/text()",
             ])),
-            # Sanitized for safe embedding in AI prompts
-            "description": _sanitize_for_prompt(raw_description),
+            "description": description,
             "cwe": _first(node, [
                 ".//*[local-name()='cwe']/text()",
                 ".//*[local-name()='CWE']/text()",
@@ -218,6 +234,10 @@ def _extract_cve_records(root: etree._Element) -> list[dict[str, Any]]:
             ".//*[local-name()='otherinfo']/text()",
         ])
         description = _sanitize_for_prompt(raw_description)
+        score = _predict_cvss(description)
+        predicted_score = score is not None
+        if severity == "UNKNOWN" and predicted_score:
+            severity = _normalize_severity(score)
         alert_name = _first(node, [
             ".//*[local-name()='name']/text()",
             ".//*[local-name()='alert']/text()",
@@ -244,7 +264,8 @@ def _extract_cve_records(root: etree._Element) -> list[dict[str, Any]]:
             records.append({
                 "cve_id":         synthetic_id,
                 "severity":       severity,
-                "cvss_score":     None,
+                "cvss_score":     score,
+                "cvss_predicted":  predicted_score,
                 "published_date": "",
                 "description":    description or _sanitize_for_prompt(alert_name),
                 "cwe":            cwe_value,
@@ -259,7 +280,8 @@ def _extract_cve_records(root: etree._Element) -> list[dict[str, Any]]:
             records.append({
                 "cve_id":         cve_id,
                 "severity":       severity,
-                "cvss_score":     None,
+                "cvss_score":     score,
+                "cvss_predicted":  predicted_score,
                 "published_date": "",
                 "description":    description or _sanitize_for_prompt(alert_name),
                 "cwe":            cwe_value,
@@ -277,6 +299,7 @@ def _extract_cve_records(root: etree._Element) -> list[dict[str, Any]]:
             "cve_id":         cve_id,
             "severity":       "UNKNOWN",
             "cvss_score":     None,
+            "cvss_predicted":  False,
             "published_date": "",
             "description":    "",
             "cwe":            "",
@@ -301,12 +324,16 @@ def _extract_finding_records(root: etree._Element) -> list[dict[str, Any]]:
             ".//*[local-name()='desc']/text()",
         ]) or alert_name
         description = _sanitize_for_prompt(raw_description)
+        score = _predict_cvss(description)
+        predicted_score = score is not None
         reference = _first(node, [".//*[local-name()='reference']/text()"])
         severity = _severity_from_text(_first(node, [
             ".//*[local-name()='riskdesc']/text()",
             ".//*[local-name()='risk']/text()",
             ".//*[local-name()='riskcode']/text()",
         ]))
+        if severity == "UNKNOWN" and predicted_score:
+            severity = _normalize_severity(score)
         cwe_value = _first(node, [
             ".//*[local-name()='cweid']/text()",
             ".//*[local-name()='cwe']/text()",
@@ -332,7 +359,8 @@ def _extract_finding_records(root: etree._Element) -> list[dict[str, Any]]:
                 findings.append({
                     "cve_id":         f"{primary_id}-F{iidx}",
                     "severity":       severity,
-                    "cvss_score":     None,
+                    "cvss_score":     score,
+                    "cvss_predicted":  predicted_score,
                     "published_date": "",
                     "description":    description,
                     "cwe":            cwe_value,
@@ -348,7 +376,8 @@ def _extract_finding_records(root: etree._Element) -> list[dict[str, Any]]:
             findings.append({
                 "cve_id":         f"{primary_id}-F{iidx}",
                 "severity":       severity,
-                "cvss_score":     None,
+                "cvss_score":     score,
+                "cvss_predicted":  predicted_score,
                 "published_date": "",
                 "description":    description,
                 "cwe":            cwe_value,

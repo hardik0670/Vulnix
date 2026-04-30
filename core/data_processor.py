@@ -7,7 +7,7 @@ from typing import Any
 
 import pandas as pd
 
-EXPECTED_COLUMNS = ["cve_id", "severity", "cvss_score", "published_date", "raw_description", "cwe"]
+EXPECTED_COLUMNS = ["cve_id", "severity", "cvss_score", "published_date", "description", "cwe"]
 SEVERITY_ORDER = ["CRITICAL", "HIGH", "MEDIUM", "LOW", "UNKNOWN"]
 
 
@@ -21,7 +21,7 @@ def records_to_dataframe(records: list[dict[str, Any]]) -> pd.DataFrame:
     df = df[EXPECTED_COLUMNS].copy()
     df["severity"] = df["severity"].fillna("UNKNOWN").astype(str).str.upper()
     df["published_date"] = pd.to_datetime(df["published_date"], errors="coerce")
-    df["raw_description"] = df["raw_description"].fillna("").astype(str)
+    df["description"] = df["description"].fillna("").astype(str)
     df["cvss_score"] = pd.to_numeric(df["cvss_score"], errors="coerce")
     return df
 
